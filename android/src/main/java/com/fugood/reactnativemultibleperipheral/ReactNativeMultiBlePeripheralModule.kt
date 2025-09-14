@@ -238,11 +238,21 @@ class ReactNativeMultiBlePeripheralModule(reactContext: ReactApplicationContext)
     var value = Base64.decode(value, Base64.DEFAULT)
     characteristic.value = value
     for (device in registeredDevices) {
-      val response = bluetoothGattServer.notifyCharacteristicChanged(
-        device,
-        characteristic,
-        confirm
-      )
+      val response = if (Build.VERSION.SDK_INT >= 33) {
+        bluetoothGattServer.notifyCharacteristicChanged(
+          device,
+          characteristic,
+          confirm,
+          value
+        )
+      } else {
+        bluetoothGattServer.notifyCharacteristicChanged(
+          device,
+          characteristic,
+          confirm
+        )
+      }
+      Log.d(NAME, "Notify ${device.name} (${device.address}) response = $response")
     }
     promise.resolve(null)
   }
@@ -447,7 +457,7 @@ class ReactNativeMultiBlePeripheralModule(reactContext: ReactApplicationContext)
     if (advServices != null) {
       for (service in advServices.getEntryIterator()) {
         val uuid = UUID.fromString(service.key)
-        if (service.value is String) {
+        if (service.value is String && service.value != "") {
           val data = Base64.decode(service.value as String, Base64.DEFAULT)
           advertiseDataBuilder.addServiceData(ParcelUuid(uuid), data)
         }
