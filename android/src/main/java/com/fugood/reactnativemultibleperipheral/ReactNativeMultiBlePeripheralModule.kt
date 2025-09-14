@@ -455,11 +455,17 @@ class ReactNativeMultiBlePeripheralModule(reactContext: ReactApplicationContext)
       )
     }
     if (advServices != null) {
-      for (service in advServices.getEntryIterator()) {
-        val uuid = UUID.fromString(service.key)
-        if (service.value is String && service.value != "") {
-          val data = Base64.decode(service.value as String, Base64.DEFAULT)
-          advertiseDataBuilder.addServiceData(ParcelUuid(uuid), data)
+      val iterator = advServices.keySetIterator()
+      while (iterator.hasNextKey()) {
+        val key = iterator.nextKey()
+        val uuid = UUID.fromString(key)
+        val valueType = advServices.getType(key)
+        if (valueType == com.facebook.react.bridge.ReadableType.String) {
+          val value = advServices.getString(key)
+          if (value != null && value != "") {
+            val data = Base64.decode(value, Base64.DEFAULT)
+            advertiseDataBuilder.addServiceData(ParcelUuid(uuid), data)
+          }
         }
         advertiseDataBuilder.addServiceUuid(ParcelUuid(uuid))
       }
