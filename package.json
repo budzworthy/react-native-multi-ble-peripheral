@@ -1,6 +1,7 @@
 {
   "name": "@budzworthy/react-native-multi-ble-peripheral",
   "version": "0.1.5",
+  "private": false,
   "description": "test",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
@@ -41,13 +42,13 @@
     "ios",
     "android"
   ],
-  "repository": "https://github.com/mybigday/react-native-multi-ble-peripheral",
-  "author": "Hans <admin@itsrv.tw> (https://github.com/mybigday)",
+  "repository": "https://github.com/budzworthy/react-native-multi-ble-peripheral",
+  "author": "Danny <budzworthy@gmail.com> (https://github.com/budzworthy)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mybigday/react-native-multi-ble-peripheral/issues"
+    "url": "https://github.com/budzworthy/react-native-multi-ble-peripheral/issues"
   },
-  "homepage": "https://github.com/mybigday/react-native-multi-ble-peripheral#readme",
+  "homepage": "https://github.com/budzworthy/react-native-multi-ble-peripheral#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
