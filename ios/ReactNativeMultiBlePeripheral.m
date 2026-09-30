@@ -59,4 +59,88 @@ RCT_EXTERN_METHOD(sendNotification:(NSInteger *)index
                   withResolver:(RCTPromiseResolveBlock)resolve
                   withRejecter:(RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(createCentral:(NSInteger)index
+                  withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(startDeviceScan:(NSInteger)index
+                  serviceUUIDs:(nullable NSArray *)serviceUUIDs
+                  options:(nullable NSDictionary *)options
+                  withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(stopDeviceScan:(NSInteger)index
+                  withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(connectToDevice:(NSInteger)index
+                  deviceID:(NSString *)deviceID
+                  options:(nullable NSDictionary *)options
+                  withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(cancelDeviceConnection:(NSInteger)index
+                  deviceID:(NSString *)deviceID
+                  withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(discoverAllServicesAndCharacteristics:(NSInteger)index
+                  deviceID:(NSString *)deviceID
+                  withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(servicesForDevice:(NSInteger)index
+                  deviceID:(NSString *)deviceID
+                  withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(characteristicsForService:(NSInteger)index
+                  deviceID:(NSString *)deviceID
+                  serviceUUID:(NSString *)serviceUUID
+                  withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(writeCharacteristic:(NSInteger)index
+                  deviceID:(NSString *)deviceID
+                  serviceUUID:(NSString *)serviceUUID
+                  characteristicUUID:(NSString *)characteristicUUID
+                  value:(NSString *)value
+                  withResponse:(BOOL)withResponse
+                  withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(readCharacteristic:(NSInteger)index
+                  deviceID:(NSString *)deviceID
+                  serviceUUID:(NSString *)serviceUUID
+                  characteristicUUID:(NSString *)characteristicUUID
+                  withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(monitorCharacteristic:(NSInteger)index
+                  deviceID:(NSString *)deviceID
+                  serviceUUID:(NSString *)serviceUUID
+                  characteristicUUID:(NSString *)characteristicUUID
+                  withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(stopMonitoringCharacteristic:(NSInteger)index
+                  deviceID:(NSString *)deviceID
+                  serviceUUID:(NSString *)serviceUUID
+                  characteristicUUID:(NSString *)characteristicUUID
+                  withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(readRSSI:(NSInteger)index
+                  deviceID:(NSString *)deviceID
+                  withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(setLogLevel:(NSInteger)level
+                  withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(destroyCentral:(NSInteger)index
+                  withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
 @end

@@ -1,111 +1,146 @@
 # react-native-multi-ble-peripheral
 
-React Native Multi BLE Peripheral Manager
+React Native BLE peripheral and central manager for iOS and Android. The library provides both GATT server/advertising and scanning/GATT client APIs without a separate BLE stack dependency.
 
 ## Installation
 
 ```sh
-npm install react-native-multi-ble-peripheral
+npm install @budzworthy/react-native-multi-ble-peripheral
 ```
+
+For iOS, install CocoaPods dependencies with `pod install`.
+
+## Permissions
 
 ### iOS
 
-Add these lines in `Info.plist`
+Add a Bluetooth usage description to the app's `Info.plist`:
 
 ```xml
 <key>NSBluetoothAlwaysUsageDescription</key>
-<string>For advertise as BLE peripheral</string>
+<string>Bluetooth is used to discover and communicate with nearby devices.</string>
 ```
 
 ### Android
 
-- Add these lines in `AndroidManifest.xml`
+Add the following permissions to the app manifest. The library manifest declares these permissions for manifest merging as well; apps must still request the runtime permissions before using Bluetooth on Android 12 and later.
 
 ```xml
-<uses-permission android:name="android.permission.BLUETOOTH" />
-<uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+<uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
+<uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
 <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+<uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
 ```
 
-- Do this patch if you build on SDK 33+
+Request `BLUETOOTH_SCAN` and `BLUETOOTH_CONNECT` before central operations and `BLUETOOTH_ADVERTISE` before peripheral operations on Android 12+. For Android 11 and earlier, request location permission before scanning.
 
-```diff
-diff --git a/android/src/main/java/com/fugood/reactnativemultibleperipheral/ReactNativeMultiBlePeripheralModule.kt b/android/src/main/java/com/fugood/reactnativemultibleperipheral/ReactNativeMultiBlePeripheralModule.kt
-index 2e763af..746c0c7 100644
---- a/android/src/main/java/com/fugood/reactnativemultibleperipheral/ReactNativeMultiBlePeripheralModule.kt
-+++ b/android/src/main/java/com/fugood/reactnativemultibleperipheral/ReactNativeMultiBlePeripheralModule.kt
-@@ -241,7 +241,8 @@ class ReactNativeMultiBlePeripheralModule(reactContext: ReactApplicationContext)
-       val response = bluetoothGattServer.notifyCharacteristicChanged(
-         device,
-         characteristic,
--        confirm
-+        confirm,
-+        value
-       )
-       Log.d(NAME, "Notify ${device.name} (${device.address}) response = $response")
-     }
-```
+## Central role: scan and connect
 
-#### Request permission
+```ts
+import {
+  Central,
+  LogLevel,
+  ScanCallbackType,
+  ScanMode,
+} from '@budzworthy/react-native-multi-ble-peripheral';
 
-> Should check permission before create peripheral instance
+const central = new Central();
+central.setLogLevel(LogLevel.Verbose);
 
-```js
-import { PermissionsAndroid } from 'react-native';
-
-await PermissionsAndroid.request(
-  PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-  options,
+await central.startDeviceScan(
+  ['0000180d-0000-1000-8000-00805f9b34fb'],
+  {
+    allowDuplicates: false,
+    scanMode: ScanMode.LowLatency,
+    callbackType: ScanCallbackType.AllMatches,
+  },
+  (error, device) => {
+    if (error) {
+      console.warn(error);
+      return;
+    }
+    if (device) {
+      console.log(device.id, device.name, device.rssi, device.serviceUUIDs);
+    }
+  }
 );
-await PermissionsAndroid.request(
-  PermissionsAndroid.PERMISSIONS.BLUETOOTH_ADVERTISE,
-  options,
-);
+
+await central.stopDeviceScan();
+const device = await central.connectToDevice(deviceId, {
+  autoConnect: true,
+  timeout: 10000,
+});
+await device.discoverAllServicesAndCharacteristics();
+const services = await device.services();
+const characteristics = await device.characteristicsForService(services[0].uuid);
 ```
 
-## Usage
+`Device` exposes `id`, `name`, `rssi`, `manufacturerData` and `serviceUUIDs`. Characteristic values are base64 strings:
 
-```js
-import Peripheral, { Permission, Property } from 'react-native-multi-ble-peripheral';
+```ts
+const serviceUUID = services[0].uuid;
+const characteristicUUID = characteristics[0].uuid;
+
+const value = await central.readCharacteristicForDevice(
+  device.id,
+  serviceUUID,
+  characteristicUUID
+);
+
+await device.writeCharacteristicWithoutResponseForService(
+  serviceUUID,
+  characteristicUUID,
+  base64Value
+);
+
+const subscription = device.monitorCharacteristic(
+  serviceUUID,
+  characteristicUUID,
+  (error, characteristic) => {
+    if (!error && characteristic) console.log(characteristic.value);
+  }
+);
+
+const rssi = await device.readRSSI();
+subscription.remove();
+await central.cancelDeviceConnection(device.id);
+await central.destroy();
+```
+
+The manager also emits `connect`, `disconnect`, and `error` events. `monitorCharacteristicForDevice(deviceId, serviceUUID, characteristicUUID, listener)` is available on `Central` as well as `device.monitorCharacteristic(...)`.
+
+## Peripheral role: advertise a GATT service
+
+```ts
+import Peripheral, { Permission, Property } from '@budzworthy/react-native-multi-ble-peripheral';
 import { Buffer } from 'buffer';
 
-Peripheral.setDeviceName('MyDevice');
-
 const peripheral = new Peripheral();
-
-// We need wait peripheral manager ready before any operation.
 peripheral.on('ready', async () => {
   await peripheral.addService('1234', true);
   await peripheral.addCharacteristic(
     '1234',
-    'ABCD',
-    Property.READ | Property.WRITE,
+    'abcd',
+    Property.READ | Property.WRITE | Property.NOTIFY,
     Permission.READABLE | Permission.WRITEABLE
   );
-  await peripheral.updateValue('1234', 'ABCD', Buffer.from('Hello World!'));
+  await peripheral.updateValue('1234', 'abcd', Buffer.from('Hello World!'));
   await peripheral.startAdvertising();
 });
 ```
 
+Peripheral events include `write`, `subscribe`, `unsubscribe`, `ready`, `error` and `destroy`. `Peripheral.setDeviceName(name)` sets the local advertising name.
+
+## API enums
+
+`Central` exports/uses `ScanMode` (`LowPower`, `Balanced`, `LowLatency`), `ScanCallbackType` (`AllMatches`, `FirstMatch`, `MatchLost`) and `LogLevel` (`Verbose`, `Debug`, `Info`, `Warning`, `Error`, `None`). Peripheral exports `Permission`, `Property`, `TxPowerLevel` and `AdvertiseMode`.
+
 ## Contributing
 
-See the [contributing guide](CONTRIBUTING.md) to learn how to contribute to the repository and the development workflow.
+See the [contributing guide](CONTRIBUTING.md) to learn about the development workflow.
 
 ## License
 
 MIT
-
----
-
-Made with [create-react-native-library](https://github.com/callstack/react-native-builder-bob)
-
----
-
-<p align="center">
-  <a href="https://bricks.tools">
-    <img width="90px" src="https://avatars.githubusercontent.com/u/17320237?s=200&v=4">
-  </a>
-  <p align="center">
-    Built and maintained by <a href="https://bricks.tools">BRICKS</a>.
-  </p>
-</p>
